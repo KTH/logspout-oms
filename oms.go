@@ -75,9 +75,9 @@ type OmsAdapter struct {
 	client  *http.Client
 }
 
-func (a *OmsAdapter) signature(stringToSign string) (signature string) {
-	//Signature=Base64(HMAC-SHA256(UTF8(StringToSign)))
-	key, _ := base64.StdEncoding.DecodeString(a.sharedKey)
+func (adapter *OmsAdapter) signature(stringToSign string) (signature string) {
+	// Signature=Base64(HMAC-SHA256(UTF8(StringToSign)))
+	key, _ := base64.StdEncoding.DecodeString(adapter.sharedKey)
 	mac := hmac.New(sha256.New, key)
 	mac.Write([]byte(stringToSign))
 	buffer := mac.Sum(nil)
@@ -91,7 +91,7 @@ func (adapter *OmsAdapter) authorization(request *http.Request) (authorization s
 }
 
 func stringToSign(request *http.Request) (stringToSign string) {
-	//POST\n1024\napplication/json\nx-ms-date:Mon, 04 Apr 2016 08:00:00 GMT\n/api/logs
+	// POST\n1024\napplication/json\nx-ms-date:Mon, 04 Apr 2016 08:00:00 GMT\n/api/logs
   // OMS requires lower case in x-ms-date, hence ugly hack.
 	stringToSign =
 		request.Method + "\n" +
@@ -105,17 +105,21 @@ func stringToSign(request *http.Request) (stringToSign string) {
 func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 	for message := range logstream {
 		body, err := json.Marshal(JsonMessage{
-				Message: message.Data,
-				Stream:  message.Source,
+				Name:     message.Container.Name,
+				ID:       message.Container.ID,
+				Image:    message.Container.Config.Image,
+				Hostname: message.Container.Config.Hostname,
+				Message:  message.Data,
+				Stream:   message.Source,
 		})
 
-		request, err := http.NewRequest(http.MethodPost, adapter.uri, bytes.NewReader(body))
+		request, err := http.NewRequest("POST", adapter.uri, bytes.NewReader(body))
 		if err != nil {
 			log.Println("logspout-oms: error:", err)
 			return
 		}
 
-		request.Header.Add("Log-Type", "test")
+		request.Header.Add("Log-Type", "Docker")
 		request.Header.Add("Content-Type", "application/json")
 
 		// OMS really requires 'GMT' rather than non-compliant time.RFC1123
@@ -143,6 +147,10 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 }
 
 type JsonMessage struct {
-	Message string     `json:"message"`
-	Stream  string     `json:"stream"`
+	Name     string `json:"name"`
+	ID       string `json:"id"`
+	Image    string `json:"image"`
+	Hostname string `json:"hostname"`
+	Message  string `json:"message"`
+	Stream   string `json:"stream"`
 }
