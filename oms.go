@@ -102,55 +102,106 @@ func stringToSign(request *http.Request) (stringToSign string) {
 	return stringToSign
 }
 
+func (adapter *OmsAdapter) makeRequest(body []byte) (request *http.Request) {
+	request, err := http.NewRequest("POST", adapter.uri, bytes.NewReader(body))
+	if err != nil {
+		log.Println("logspout-oms: error:", err)
+		return
+	}
+
+	request.Header.Add("Log-Type", "Bunyan")
+	request.Header.Add("Content-Type", "application/json")
+	// OMS really requires 'GMT' rather than non-compliant time.RFC1123
+	// Also requires lower case, hence ugly hack.
+	request.Header["x-ms-date"] = []string{time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT")}
+	request.Header.Add("authorization", adapter.authorization(request))
+	return request
+}
+
+func level(source string) (level int, levelStr string) {
+	if (source == "stdout") {
+		return 30, "INFO"
+	} else {
+		return 50, "ERROR"
+	}
+}
+
 func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 	for message := range logstream {
-		body, err := json.Marshal(JsonMessage{
-				Name:     message.Container.Name,
-				ID:       message.Container.ID,
-				Image:    message.Container.Config.Image,
-				Hostname: message.Container.Config.Hostname,
-				Message:  message.Data,
-				Stream:   message.Source,
-		})
-
-		request, err := http.NewRequest("POST", adapter.uri, bytes.NewReader(body))
-		if err != nil {
-			log.Println("logspout-oms: error:", err)
-			return
+		dockerInfo := DockerInfo {
+			Name:     message.Container.Name,
+			ID:       message.Container.ID,
+			Image:    message.Container.Config.Image,
+			Hostname: message.Container.Config.Hostname,
 		}
 
-		request.Header.Add("Log-Type", "Docker")
-		request.Header.Add("Content-Type", "application/json")
+		var body []byte
+		var data map[string]interface{}
 
-		// OMS really requires 'GMT' rather than non-compliant time.RFC1123
-		// Also requires lower case, hence ugly hack.
-		request.Header["x-ms-date"] = []string{time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT")}
+		if err := json.Unmarshal([]byte(message.Data), &data); err != nil {
+			// The message is not in JSON, make a new JSON message.
+			level, levelStr := level(message.Source)
+			msg := BunyanMessage {
+				V: 			  0,
+				Level:	  level,
+				LevelStr: levelStr,
+				Name:			message.Container.Name,
+				Hostname: message.Container.Config.Hostname,
+				Pid:		  message.Container.ID,
+				Time:     time.Now().Format("2006-01-02T15:04:05Z"),
+				Msg: 		  message.Data,
+				Src:		  message.Container.Config.Image,
+				DockerInfo:   dockerInfo,
+			}
 
-		request.Header.Add("authorization", adapter.authorization(request))
+			if body, err = json.Marshal(msg); err != nil {
+				log.Println("oms: could not marshal JSON:", err)
+				continue
+			}
+		} else {
+			// The message is already in JSON, add the docker specific fields.
+			data["dockerinfo"] = dockerInfo
 
+			if body, err = json.Marshal(data); err != nil {
+				log.Println("logstash: could not marshal JSON:", err)
+				continue
+			}
+		}
+
+		request := adapter.makeRequest(body)
 		response, err := adapter.client.Do(request)
 
 		if err != nil {
-			log.Println("logspout-oms:", err)
+			log.Fatal("logspout-oms:", err)
 			return
 		} else if response.StatusCode != 202 {
 			log.Println("logspout-oms: status:", response.Status)
 			buf := new(bytes.Buffer)
 			request.Write(buf)
 			log.Println("logspout-oms: request:", buf.String())
-			buf = new(bytes.Buffer)
 			response.Write(buf)
 			log.Println("logspout-oms: response:", buf.String())
-			return
+			continue
 		}
 	}
 }
 
-type JsonMessage struct {
+type DockerInfo struct {
 	Name     string `json:"name"`
 	ID       string `json:"id"`
 	Image    string `json:"image"`
 	Hostname string `json:"hostname"`
-	Message  string `json:"message"`
-	Stream   string `json:"stream"`
+}
+
+type BunyanMessage struct {
+	V				 int      `json:"v"`
+	Level		 int      `json:"level"`
+	LevelStr string   `json:"levelStr"`
+	Name	   string   `json:"logger"`
+	Hostname string   `json:"hostname"`
+	Pid      string   `json:"pid"`
+	Time     string   `json:"time"`
+	Msg      string   `json:"msg"`
+	Src      string   `json:"src"`
+	DockerInfo DockerInfo `json:"dockerinfo"`
 }
