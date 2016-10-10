@@ -181,7 +181,7 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 			log.Println("logspout-oms: request:", buf.String())
 			response.Write(buf)
 			log.Println("logspout-oms: response:", buf.String())
-			continue
+			return
 		}
 	}
 }
