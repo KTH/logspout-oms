@@ -150,7 +150,7 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 				Name:			message.Container.Name,
 				Hostname: message.Container.Config.Hostname,
 				Pid:		  message.Container.ID,
-				Time:     time.Now().Format("2006-01-02T15:04:05Z"),
+				Time:     time.Now().Format("2006-01-02T15:04:05.999Z"),
 				Msg: 		  message.Data,
 				Src:		  message.Container.Config.Image,
 				DockerInfo:   dockerInfo,
