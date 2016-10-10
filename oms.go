@@ -54,7 +54,9 @@ func NewOmsAdapter(route *router.Route) (router.LogAdapter, error) {
 	workspaceId := strings.Split(route.Address, ".")[0]
 	uri := "https://" + workspaceId + ".ods.opinsights.azure.com/api/logs?api-version=2016-04-01"
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
 
 	time.LoadLocation("Stockholm/Sweden")
 
