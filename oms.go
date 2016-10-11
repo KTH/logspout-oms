@@ -33,6 +33,7 @@ package oms
 import (
 	"bytes"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -54,8 +55,16 @@ func NewOmsAdapter(route *router.Route) (router.LogAdapter, error) {
 	workspaceId := strings.Split(route.Address, ".")[0]
 	uri := "https://" + workspaceId + ".ods.opinsights.azure.com/api/logs?api-version=2016-04-01"
 
+	transport := &http.Transport{
+	  Dial: (&net.Dialer{
+	    Timeout: 5 * time.Second,
+	  }).Dial,
+	  TLSHandshakeTimeout: 5 * time.Second,
+	}
+
 	client := &http.Client{
 		Timeout: time.Second * 10,
+		Transport: transport,
 	}
 
 	time.LoadLocation("Stockholm/Sweden")
@@ -174,7 +183,7 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 		response, err := adapter.client.Do(request)
 
 		if err != nil {
-			log.Fatal("logspout-oms:", err)
+			log.Println("logspout-oms:", err)
 			return
 		} else if response.StatusCode != 202 {
 			log.Println("logspout-oms: status:", response.Status)
@@ -185,6 +194,9 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 			log.Println("logspout-oms: response:", buf.String())
 			return
 		}
+
+		io.Copy(ioutil.Discard, res.Body)
+		res.Body.Close()
 	}
 }
 
