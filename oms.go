@@ -32,16 +32,17 @@ package oms
 
 import (
 	"bytes"
-	"log"
-	"net"
-	"net/http"
-	"strings"
-	"time"
-	"strconv"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gliderlabs/logspout/router"
 )
@@ -195,8 +196,8 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 			return
 		}
 
-		io.Copy(ioutil.Discard, res.Body)
-		res.Body.Close()
+		io.Copy(ioutil.Discard, response.Body)
+		response.Body.Close()
 	}
 }
 
