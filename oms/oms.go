@@ -105,12 +105,11 @@ func (adapter *OmsAdapter) authorization(request *http.Request) (authorization s
 
 func stringToSign(request *http.Request) (stringToSign string) {
 	// POST\n1024\napplication/json\nx-ms-date:Mon, 04 Apr 2016 08:00:00 GMT\n/api/logs
-  // OMS requires lower case in x-ms-date, hence ugly hack.
 	stringToSign =
 		request.Method + "\n" +
 		strconv.FormatInt(request.ContentLength, 10) + "\n" +
  		request.Header.Get("Content-Type") + "\n" +
-		"x-ms-date:" + request.Header["x-ms-date"][0] + "\n" +
+		"x-ms-date:" + request.Header.get("x-ms-date") + "\n" +
 		"/api/logs"
 	return stringToSign
 }
@@ -125,8 +124,7 @@ func (adapter *OmsAdapter) makeRequest(body []byte) (request *http.Request) {
 	request.Header.Add("Log-Type", "Bunyan")
 	request.Header.Add("Content-Type", "application/json")
 	// OMS really requires 'GMT' rather than non-compliant time.RFC1123
-	// Also requires lower case, hence ugly hack.
-	request.Header["x-ms-date"] = []string{time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT")}
+	request.Header.Add("x-ms-date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Add("authorization", adapter.authorization(request))
 	return request
 }
