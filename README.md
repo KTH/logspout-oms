@@ -1,7 +1,11 @@
 # logspout-oms
-An adapter for logspout to write messages to Azure Operations Management Suite
 
-Use by importing `github.com/kth/logspout-oms` in `modules.go` of logspout.
+An adapter for logspout to write messages to Azure Operations Management Suite.
+
+This folder can be built as a regular docker image with `docker build`. It
+uses the Docker file from `github.com/gliderlabs/logspout`. It essentially
+copies the included files from this folder on top of the logspout source and
+compiles it in a docker container with go installed.
 
 ```
 import (
@@ -12,8 +16,6 @@ import (
 	_ "github.com/kth/logspout-oms"
 )
 ```
-
-Then build your image.
 
 Run it by adding the OMS URL to the command:
 
@@ -36,7 +38,7 @@ docker service create \
   --restart-max-attempts 10 \
   --network external_nw \
   --name="logspout" \
-  --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+  --mount type=bind,src=/var/run/docker.sock,dst=/tmp/docker.sock \
   your-image-tag \
   'oms://your-oms-url-as-specified-above'
 ```
