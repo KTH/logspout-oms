@@ -109,7 +109,7 @@ func stringToSign(request *http.Request) (stringToSign string) {
 		request.Method + "\n" +
 		strconv.FormatInt(request.ContentLength, 10) + "\n" +
  		request.Header.Get("Content-Type") + "\n" +
-		"x-ms-date:" + request.Header.get("x-ms-date") + "\n" +
+		"x-ms-date:" + request.Header.Get("x-ms-date") + "\n" +
 		"/api/logs"
 	return stringToSign
 }
