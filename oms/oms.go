@@ -41,6 +41,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -148,7 +149,7 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 
 		var body []byte
 		var data map[string]interface{}
-
+	
 		if err := json.Unmarshal([]byte(message.Data), &data); err != nil {
 			// The message is not in JSON, make a new JSON message.
 			level, levelStr := level(message.Source)
@@ -178,27 +179,44 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 				continue
 			}
 		}
+		adapter.send(body)		
+	}
+}
 
-		request := adapter.makeRequest(body)
+
+func (adapter *OmsAdapter) send(body []byte) {
+	request := adapter.makeRequest(body)
+	attempt := 0
+	
+	for attempt < 10 {
+		attempt = attempt - 1
+
 		response, err := adapter.client.Do(request)
 
 		if err != nil {
 			log.Println("logspout-oms:", err)
-			return
+			if response != nil {
+				io.Copy(ioutil.Discard, response.Body)
+				response.Body.Close()
+			}
 		} else if response.StatusCode != 202 {
 			log.Println("logspout-oms: status:", response.Status)
 			buf := new(bytes.Buffer)
-			request.Write(buf)
-			log.Println("logspout-oms: request:", buf.String())
 			response.Write(buf)
 			log.Println("logspout-oms: response:", buf.String())
+			response.Body.Close()
+		} else {
+			io.Copy(ioutil.Discard, response.Body)
+			response.Body.Close()
 			return
 		}
-
-		io.Copy(ioutil.Discard, response.Body)
-		response.Body.Close()
+		log.Println("logspout-oms: back-off in seconds before retry:", attempt)
+		time.Sleep(time.Duration(attempt) * time.Second)
 	}
+	log.Println("logspout-oms: unable to send message, exiting.")
+	os.Exit(1)
 }
+
 
 type DockerInfo struct {
 	Name     string `json:"name"`
