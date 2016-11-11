@@ -166,7 +166,7 @@ func (adapter *OmsAdapter) sendJson(data map[string]interface{}) {
 		if data["Type"] != nil {
 			adapter.send(data["Type"].(string), body)
 		} else {
-			adapter.send("UknownType", body)
+			adapter.send("Bunyan", body)
 		}
 	} else {
   	log.Println("logstash: could not marshal JSON:", err)
@@ -198,12 +198,8 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 
 
 func (adapter *OmsAdapter) send(logType string, body []byte) {
-	request := adapter.makeRequest(logType, body)
-	attempt := 0
-
-	for attempt < 10 {
-		attempt = attempt + 1
-
+	for attempt := 1; attempt <= 10; attempt++ {
+		request := adapter.makeRequest(logType, body)
 		response, err := adapter.client.Do(request)
 
 		if err != nil {
