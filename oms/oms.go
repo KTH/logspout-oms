@@ -163,7 +163,11 @@ func (adapter *OmsAdapter) sendDefault(message *router.Message) {
 
 func (adapter *OmsAdapter) sendJson(data map[string]interface{}) {
 	if body, err := json.Marshal(data); err == nil {
-		adapter.send("Bunyan", body)
+		if data["Type"] != nil {
+			adapter.send(data["Type"].(string), body)
+		} else {
+			adapter.send("UknownType", body)
+		}
 	} else {
   	log.Println("logstash: could not marshal JSON:", err)
 	}
