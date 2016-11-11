@@ -115,14 +115,14 @@ func stringToSign(request *http.Request) (stringToSign string) {
 	return stringToSign
 }
 
-func (adapter *OmsAdapter) makeRequest(body []byte) (request *http.Request) {
+func (adapter *OmsAdapter) makeRequest(logType string, body []byte) (request *http.Request) {
 	request, err := http.NewRequest("POST", adapter.uri, bytes.NewReader(body))
 	if err != nil {
 		log.Println("logspout-oms: error:", err)
-		return
+		return nil
 	}
 
-	request.Header.Add("Log-Type", "Bunyan")
+	request.Header.Add("Log-Type", logType)
 	request.Header.Add("Content-Type", "application/json")
 	// OMS really requires 'GMT' rather than non-compliant time.RFC1123
 	request.Header.Add("x-ms-date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
@@ -138,58 +138,67 @@ func level(source string) (level int, levelStr string) {
 	}
 }
 
-func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
-	for message := range logstream {
-		dockerInfo := DockerInfo {
-			Name:     message.Container.Name,
-			ID:       message.Container.ID,
-			Image:    message.Container.Config.Image,
-			Hostname: message.Container.Config.Hostname,
-		}
+func (adapter *OmsAdapter) sendDefault(message *router.Message) {
+	level, levelStr := level(message.Source)
+	msg := BunyanMessage {
+		V: 			  0,
+		Level:	  level,
+		LevelStr: levelStr,
+		Name:			message.Container.Name,
+		Hostname: message.Container.Config.Hostname,
+		Pid:		  message.Container.ID,
+		Time:     time.Now().Format("2006-01-02T15:04:05.999Z"),
+		Msg: 		  message.Data,
+		Src:		  message.Container.Config.Image,
+		DockerInfo:   dockerinfo(message),
+	}
 
-		var body []byte
-		var data map[string]interface{}
-	
-		if err := json.Unmarshal([]byte(message.Data), &data); err != nil {
-			// The message is not in JSON, make a new JSON message.
-			level, levelStr := level(message.Source)
-			msg := BunyanMessage {
-				V: 			  0,
-				Level:	  level,
-				LevelStr: levelStr,
-				Name:			message.Container.Name,
-				Hostname: message.Container.Config.Hostname,
-				Pid:		  message.Container.ID,
-				Time:     time.Now().Format("2006-01-02T15:04:05.999Z"),
-				Msg: 		  message.Data,
-				Src:		  message.Container.Config.Image,
-				DockerInfo:   dockerInfo,
-			}
-
-			if body, err = json.Marshal(msg); err != nil {
-				log.Println("oms: could not marshal JSON:", err)
-				continue
-			}
-		} else {
-			// The message is already in JSON, add the docker specific fields.
-			data["dockerinfo"] = dockerInfo
-
-			if body, err = json.Marshal(data); err != nil {
-				log.Println("logstash: could not marshal JSON:", err)
-				continue
-			}
-		}
-		adapter.send(body)		
+	if body, err := json.Marshal(msg); err == nil {
+		adapter.send("Bunyan", body)
+	} else {
+  	log.Println("logstash: could not marshal JSON:", err)
 	}
 }
 
 
-func (adapter *OmsAdapter) send(body []byte) {
-	request := adapter.makeRequest(body)
+func (adapter *OmsAdapter) sendJson(data map[string]interface{}) {
+	if body, err := json.Marshal(data); err == nil {
+		adapter.send("Bunyan", body)
+	} else {
+  	log.Println("logstash: could not marshal JSON:", err)
+	}
+}
+
+
+func dockerinfo(message *router.Message) (dockerinfo DockerInfo) {
+	return DockerInfo {
+		Name:     message.Container.Name,
+		ID:       message.Container.ID,
+		Image:    message.Container.Config.Image,
+		Hostname: message.Container.Config.Hostname,
+	}
+}
+
+
+func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
+	for message := range logstream {
+		var data map[string]interface{}
+
+		if err := json.Unmarshal([]byte(message.Data), &data); err != nil {
+			adapter.sendDefault(message);
+		} else {
+			adapter.sendJson(data);
+		}
+	}
+}
+
+
+func (adapter *OmsAdapter) send(logType string, body []byte) {
+	request := adapter.makeRequest(logType, body)
 	attempt := 0
-	
+
 	for attempt < 10 {
-		attempt = attempt - 1
+		attempt = attempt + 1
 
 		response, err := adapter.client.Do(request)
 
