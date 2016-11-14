@@ -189,8 +189,11 @@ func (adapter *OmsAdapter) Stream(logstream chan *router.Message) {
 		var data map[string]interface{}
 
 		if err := json.Unmarshal([]byte(message.Data), &data); err != nil {
+			// Generate JSON from message and send.
 			adapter.sendDefault(message);
 		} else {
+			// Add docker meta data and send json as is.
+			data["dockerinfo"] = dockerinfo(message)
 			adapter.sendJson(data);
 		}
 	}
