@@ -35,6 +35,8 @@ compiles it in a docker container with go installed.
 
 You can edit modules.go in order to include/exclude modules as you see fit.
 
+Pre-built images of this project are available on docker hub as kthse/logspout-oms.
+
 ## Run
 
 Run it by adding the OMS URL to the command:
@@ -46,7 +48,7 @@ oms://<workspace-id>.ods.opinsights.azure.com?sharedKey=<urlencoded key>
 Where workspace-id is the id found under Settings, Connected Sources in
 OMS. It's a the alfa-numerical string found there, not the name you gave
 the workspace. Key is either of the primary or secondary keys, however
-it needs to be manually urlencoded in the URL parameter.
+it needs to be *manually urlencoded* in the URL parameter.
 
 ## Swarm global service example
 
@@ -60,6 +62,6 @@ docker service create \
   --restart-max-attempts 10 \
   --name="logspout" \
   --mount type=bind,src=/var/run/docker.sock,dst=/tmp/docker.sock \
-  your-image-tag \
+  kthse/logspout-oms:latest \
   'oms://your-oms-url-as-specified-above'
 ```
