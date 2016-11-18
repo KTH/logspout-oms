@@ -1,6 +1,8 @@
 # logspout-oms
 
-An adapter for logspout to write messages to Azure Operations Management Suite.
+An adapter for logspout (https://github.com/gliderlabs/logspout) to write
+messages to Azure Operations Management Suite, OMS
+(https://www.microsoft.com/en-us/cloud-platform/operations-management-suite).
 
 ## About log formats
 
