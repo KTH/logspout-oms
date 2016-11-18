@@ -44,6 +44,8 @@ If no Type is set, Bunyan is assumed and "Bunyan" will be used
 as type in OMS regardless of the actual JSON object structure for backward
 compatibility.
 
+## Example of application loggers
+
 ### Java, Log4j
 
 Bunyan Layout, a log4j 1.2 log layout generating messages in a Bunyan-like
