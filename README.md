@@ -2,6 +2,25 @@
 
 An adapter for logspout to write messages to Azure Operations Management Suite.
 
+## About log formats
+
+This adapter will take lines of output as forwarded by logspout and write them
+to OMS according to the following rules:
+
+1. If it is a regular text line, a JSON message will be created in a
+   Bunyan-like format (https://github.com/trentm/node-bunyan) and the
+   type set to Bunyan. In OMS, such messages will show up as of the
+   "Custom Log" type Bunyan_CL. The text will be found in the msg_s
+   property in OMS.
+2. If it is a JSON object, the message will be forwarded as is, with
+   a "dockerinfo" object with docker meta data added to the structure.
+   If the object has a "Type" field, it will be used as the type in the
+   OMS request, hence showing up as "MyType_CL" in OMS if set to "MyType".
+
+   If no Type is set, Bunyan is assumed and "Bunyan" will be used
+   regardless of the actual JSON object structure for backward
+   compatibility.
+
 ## Build
 
 This folder can be built as a regular docker image with `docker build`. It
