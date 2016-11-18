@@ -44,6 +44,23 @@ If no Type is set, Bunyan is assumed and "Bunyan" will be used
 as type in OMS regardless of the actual JSON object structure for backward
 compatibility.
 
+### Java, Log4j
+
+Bunyan Layout, a log4j 1.2 log layout generating messages in a Bunyan-like
+format. Handles things like trace dumps nicely. https://github.com/KTH/bunyan-layout
+
+### Node.js, node-bunyan
+
+Just set 'raw' as output format from node-bunyan, e.g.:
+```
+    console: {
+      enabled: true,
+      format: {
+        outputMode: 'raw'
+      }
+    }
+```
+
 ## Build
 
 This folder can be built as a regular docker image with `docker build`. It
@@ -83,3 +100,5 @@ docker service create \
   kthse/logspout-oms:latest \
   'oms://your-oms-url-as-specified-above'
 ```
+
+## Notes
