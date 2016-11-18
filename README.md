@@ -56,9 +56,8 @@ from all containers to OMS can be created like this:
 ```
 docker service create \
   --mode global \
-  --restart-condition on-failure \
+  --restart-condition any \
   --restart-max-attempts 10 \
-  --network external_nw \
   --name="logspout" \
   --mount type=bind,src=/var/run/docker.sock,dst=/tmp/docker.sock \
   your-image-tag \
