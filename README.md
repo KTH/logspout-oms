@@ -7,24 +7,40 @@ An adapter for logspout to write messages to Azure Operations Management Suite.
 This adapter will take lines of output as forwarded by logspout and write them
 to OMS according to the following rules:
 
-1. If it is a regular text line, a JSON message will be created in a
-   Bunyan-like format (https://github.com/trentm/node-bunyan) and the
-   type set to Bunyan. In OMS, such messages will show up as of the
-   "Custom Log" type Bunyan_CL. The text will be found in the msg_s
-   property in OMS.
+### Text
 
-   The log level will be set to "ERROR" (level_d = 50) for messages
-   printed to stderr from the container, and "INFO" (level_d = 30) for
-   messages printed to stdout.
+If it is a regular text line, a JSON message will be created in a
+Bunyan-like format (https://github.com/trentm/node-bunyan) and the
+type set to Bunyan. In OMS, such messages will show up as of the
+"Custom Log" type Bunyan_CL. The text will be found in the msg_s
+property in OMS.
 
-2. If it is a JSON object, the message will be forwarded as is, with
-   a "dockerinfo" object with docker meta data added to the structure.
-   If the object has a "Type" field, it will be used as the type in the
-   OMS request, hence showing up as "MyType_CL" in OMS if set to "MyType".
+The log level will be set to "ERROR" (level_d = 50) for messages
+printed to stderr from the container, and "INFO" (level_d = 30) for
+messages printed to stdout.
 
-   If no Type is set, Bunyan is assumed and "Bunyan" will be used
-   regardless of the actual JSON object structure for backward
-   compatibility.
+### JSON
+
+If it is a JSON object, the message will be forwarded as is, with
+a "dockerinfo" object with docker meta data added to the structure.
+If the object has a "Type" field, it will be used as the type in the
+OMS request, hence showing up as "MyType_CL" in OMS if set to "MyType".
+
+Using types this way is useful for printing messages to be used
+as measurements in OMS to create graphs. I.e. you can print objects
+such as:
+```
+{"Type": "CPULoad", "CPULoad": 1.2, "Hostname": "myhost"}
+```
+
+And graph this in OMS with a query like:
+```
+Type=CPULoad_CL | measure avg(CPULoad_d) by Hostname_s interval 1minute
+```
+
+If no Type is set, Bunyan is assumed and "Bunyan" will be used
+as type in OMS regardless of the actual JSON object structure for backward
+compatibility.
 
 ## Build
 
