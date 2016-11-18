@@ -12,6 +12,11 @@ to OMS according to the following rules:
    type set to Bunyan. In OMS, such messages will show up as of the
    "Custom Log" type Bunyan_CL. The text will be found in the msg_s
    property in OMS.
+
+   The log level will be set to "ERROR" (level_d = 50) for messages
+   printed to stderr from the container, and "INFO" (level_d = 30) for
+   messages printed to stdout.
+
 2. If it is a JSON object, the message will be forwarded as is, with
    a "dockerinfo" object with docker meta data added to the structure.
    If the object has a "Type" field, it will be used as the type in the
