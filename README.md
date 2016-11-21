@@ -87,6 +87,17 @@ OMS. It's a the alfa-numerical string found there, not the name you gave
 the workspace. Key is either of the primary or secondary keys, however
 it needs to be *manually urlencoded* in the URL parameter.
 
+Note: the  pre-built image is using a derivative of logspout,
+http://github.com/kth/logspout, rather than Gliderlabs version.
+There are a couple of minor differences.
+
+* It includes a later commit to logspout master to work around an issue
+  with Docker log rotation.
+* It includes another change in order not to stop logging when logging
+  to a destination that may take more than a second to respond.
+* It's based on a later base image for a newer Go version due to build
+  issues.
+
 ## Swarm global service example
 
 A docker 1.12 swarm mode service to run logspout globally pushing logs
@@ -102,5 +113,3 @@ docker service create \
   kthse/logspout-oms:latest \
   'oms://your-oms-url-as-specified-above'
 ```
-
-## Notes
