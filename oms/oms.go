@@ -180,7 +180,7 @@ func dockerinfo(message *router.Message) (dockerinfo DockerInfo) {
 		ID:       message.Container.ID,
 		Image:    message.Container.Config.Image,
 		Hostname: message.Container.Config.Hostname,
-		Labels:   message.Container.Labels,
+		Labels:   message.Container.Config.Labels,
 	}
 }
 
