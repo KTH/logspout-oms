@@ -180,6 +180,7 @@ func dockerinfo(message *router.Message) (dockerinfo DockerInfo) {
 		ID:       message.Container.ID,
 		Image:    message.Container.Config.Image,
 		Hostname: message.Container.Config.Hostname,
+		Labels:   message.Container.Labels,
 	}
 }
 
@@ -235,6 +236,7 @@ type DockerInfo struct {
 	ID       string `json:"id"`
 	Image    string `json:"image"`
 	Hostname string `json:"hostname"`
+	Labels  map[string]string `json:"labels"`
 }
 
 type BunyanMessage struct {
