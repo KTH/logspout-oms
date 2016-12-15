@@ -212,7 +212,7 @@ func (adapter *OmsAdapter) send(logType string, body []byte) {
 				io.Copy(ioutil.Discard, response.Body)
 				response.Body.Close()
 			}
-		} else if response.StatusCode != 202 {
+		} else if ! ((response.StatusCode == 200) || (response.StatusCode == 202)) {
 			log.Println("logspout-oms: status:", response.Status)
 			buf := new(bytes.Buffer)
 			response.Write(buf)
