@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright © 2016 Kungliga Tekniska högskolan
+Copyright © 2017 Kungliga Tekniska högskolan
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation

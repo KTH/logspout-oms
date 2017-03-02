@@ -1,4 +1,3 @@
-#FROM gliderlabs/logspout:master
-FROM kthse/logspout:dc2d68e
+FROM kthse/logspout:ceb589e
 
 
