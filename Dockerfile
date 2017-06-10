@@ -1,3 +1,3 @@
-FROM kthse/logspout:ceb589e
+FROM gliderlabs/logspout:3.2.2
 
 
