@@ -1,3 +1,3 @@
-FROM gliderlabs/logspout:v3.2.2
+FROM kthse/logspout:latest
 
 
