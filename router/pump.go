@@ -268,8 +268,8 @@ func (p *LogsPump) update(event *docker.APIEvents) {
 			select {
 			case r <- &update{event, pump}:
 			case <-time.After(time.Second * 1):
-				debug("pump.update(): route timeout, dropping")
-				defer delete(p.routes, r)
+				log.Println("pump.update(): route timeout, exiting")
+				os.Exit(500)
 			}
 		}
 	}
