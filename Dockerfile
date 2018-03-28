@@ -1,1 +1,1 @@
-FROM gliderlabs/logspout:v3.2.2
+FROM gliderlabs/logspout:v3.2.4
