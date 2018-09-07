@@ -74,6 +74,9 @@ You can edit modules.go in order to include/exclude modules as you see fit.
 
 Pre-built images of this project are available on docker hub as kthse/logspout-oms.
 
+More info about building custom modules is available at the **logspout** project:
+[Custom Logspout Modules](https://github.com/gliderlabs/logspout/blob/master/custom/README.md)
+
 ## Run
 
 Run it by adding the OMS URL to the command:
